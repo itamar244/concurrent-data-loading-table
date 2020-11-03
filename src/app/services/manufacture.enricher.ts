@@ -14,6 +14,6 @@ export class ManuFactureEnricher<T> implements DataEnricher<T> {
       data.map(item => {
         return { ...item, make: maunfacturersMock[item['model']] };
       }),
-    ).pipe(delay(2000));
+    ).pipe(delay(5000));
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, scheduled } from 'rxjs';
-import { delay, mergeMap, startWith, switchMap, tap } from 'rxjs/operators';
+import { combineLatest, forkJoin, from, observable, Observable, of, scheduled } from 'rxjs';
+import { delay, map, mergeMap, startWith, switchMap, tap } from 'rxjs/operators';
 import { asyncObservable } from '../rxjs-utils';
 import { DataEnricher } from './interfaces';
 import { ManuFactureEnricher } from './manufacture.enricher';
@@ -14,7 +14,7 @@ export class DataFetcherService {
     new ManuFactureEnricher(),
     new PriceFactureEnricher(),
   ];
-  private concurrent = false;
+  private concurrent = true;
 
   public fetch(): Observable<typeof rowDataMock> {
     return of(rowDataMock).pipe(
@@ -26,11 +26,15 @@ export class DataFetcherService {
   }
 
   private enrichConcurrently(data: { model: string }[]): Observable<{ model: string }[]> {
-    const observable = of([]);
-    return observable.pipe.apply(observable, [
-      ...this.enrichers.map(enricher => switchMap((subData: { model: string }[]) => enricher.enrich(subData))),
-      startWith(data),
-    ]);
+    return combineLatest(
+      this.enrichers.map(enricher => from(enricher.enrich(data)).pipe(startWith(data))),
+    ).pipe(
+      map(datas => {
+        return datas
+          .filter(data => data != null)
+          .reduce((acc, data) => acc.map((item, i) => ({ ...item, ...data[i] })));
+      }),
+    );
   }
 
   private enrichSerially(data: { model: string }[]): Observable<{ model: string }[]> {

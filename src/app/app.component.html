@@ -1,7 +1,6 @@
 <ag-grid-angular
-  *ngIf="rowData$ | async as rowData"
   style="width: 600px; height: 500px"
   class="ag-theme-alpine"
-  [rowData]="rowData"
   [columnDefs]="columnDefs"
+  (gridReady)="onGridReady($event)"
 ></ag-grid-angular>

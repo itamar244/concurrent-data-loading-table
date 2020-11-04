@@ -1,0 +1,7 @@
+<ng-container *ngIf="params.value !== undefined">
+  {{ params.value }}
+</ng-container>
+
+<ng-container *ngIf="params.value === undefined">
+  <div class="loader"></div>
+</ng-container>

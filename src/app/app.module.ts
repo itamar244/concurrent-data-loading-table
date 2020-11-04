@@ -4,10 +4,12 @@ import { NgModule } from '@angular/core';
 import { AppComponent } from './app.component';
 import { AgGridModule } from 'ag-grid-angular';
 import { DataFetcherService } from './services/data-fetcher.service';
+import { CellRendererComponent } from './components/cell-renderer/cell-renderer.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    CellRendererComponent
   ],
   imports: [
     BrowserModule,

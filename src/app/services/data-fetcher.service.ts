@@ -1,26 +1,43 @@
 import { Injectable } from '@angular/core';
-import { combineLatest, forkJoin, from, observable, Observable, of, scheduled } from 'rxjs';
-import { delay, map, mergeMap, startWith, switchMap, tap } from 'rxjs/operators';
+import { combineLatest, from, Observable, of } from 'rxjs';
+import { map, shareReplay, startWith, switchMap, tap } from 'rxjs/operators';
 import { asyncObservable } from '../rxjs-utils';
-import { DataEnricher } from './interfaces';
-import { ManuFactureEnricher } from './manufacture.enricher';
+import { DataEnricher, ParallelDataEnricher } from './interfaces';
+import { ParallelManuFactureEnricher } from './parallel-manufacture.enricher';
 import { PriceFactureEnricher } from './price.enricher';
 
 const rowDataMock = [{ model: 'Celica' }, { model: 'Mondeo' }, { model: 'Boxter' }];
 
+type Item = typeof rowDataMock[0];
+
 @Injectable()
 export class DataFetcherService {
-  private enrichers: DataEnricher<typeof rowDataMock[0]>[] = [
-    new ManuFactureEnricher(),
-    new PriceFactureEnricher(),
+  private enrichers: DataEnricher<Item>[] = [new PriceFactureEnricher()];
+  private parallelEnrichers: ParallelDataEnricher<Item, Item>[] = [
+    new ParallelManuFactureEnricher(),
   ];
   private concurrent = true;
 
-  public fetch(): Observable<typeof rowDataMock> {
-    return of(rowDataMock).pipe(
-      delay(200),
+  public fetch(): Observable<Item[]> {
+    const data$ = of(rowDataMock).pipe(
       switchMap(data => {
         return this.concurrent ? this.enrichConcurrently(data) : this.enrichSerially(data);
+      }),
+      shareReplay(1),
+    );
+
+    const enrichedData$ = combineLatest(this.parallelEnrichers.map(enricher => enricher.enrich(data$))).pipe(
+      map(datas => {
+        return datas
+          .filter(data => data != null)
+          .reduce((acc, data) => acc.map((item, i) => ({ ...item, ...data[i] })));
+      }),
+      startWith<null | Item[]>(null),
+    );
+
+    return combineLatest([data$, enrichedData$]).pipe(
+      map(([data, enrichedData]) => {
+        return enrichedData ?? data;
       }),
     );
   }
@@ -38,7 +55,7 @@ export class DataFetcherService {
   }
 
   private enrichSerially(data: { model: string }[]): Observable<{ model: string }[]> {
-    return asyncObservable<typeof rowDataMock>(async observer => {
+    return asyncObservable<Item[]>(async observer => {
       let currentData = data;
 
       observer.next(data);

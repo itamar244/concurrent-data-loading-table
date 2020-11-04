@@ -32,9 +32,9 @@ export class AppComponent implements OnInit {
         data = newData.slice();
         api.setRowData(data);
       } else {
-        newData.forEach((item, i) => {
+        for (const [i, item] of newData.entries()) {
           Object.assign(data[i], item)
-        });
+        }
         api.refreshCells();
       }
     });

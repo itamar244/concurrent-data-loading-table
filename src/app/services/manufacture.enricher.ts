@@ -16,7 +16,7 @@ export class ManuFactureEnricher<T> implements DataEnricher<T> {
 
     return concat(
       of(newData.slice(0, data.length / 2).concat(data.slice(data.length / 2) as any[])).pipe(delay(1000)),
-      of(newData).pipe(delay(4000)),
+      of(newData).pipe(delay(2000)),
     );
   }
 }

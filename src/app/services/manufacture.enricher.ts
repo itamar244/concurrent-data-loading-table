@@ -2,7 +2,7 @@ import { concat, from, Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
 import { DataEnricher } from './interfaces';
 
-const maunfacturersMock = {
+const manufacturersMock = {
   Celica: 'Toyota',
   Mondeo: 'Ford',
   Boxter: 'Porsche',
@@ -11,7 +11,7 @@ const maunfacturersMock = {
 export class ManuFactureEnricher<T> implements DataEnricher<T> {
   enrich(data: T[]): Observable<T[]> {
     const newData = data.map(item => {
-      return { ...item, make: maunfacturersMock[item['model']] };
+      return { ...item, make: manufacturersMock[(item as any)['model'] as keyof typeof manufacturersMock] };
     });
 
     return concat(
